@@ -27,7 +27,7 @@ Where:
 `-c` - are the coords to target, if not provided uses spawn of the world
 `other arguments` - are the players to teleport, if none provided teleports all online
 
-[Example source](src/example/ExampleOptionCommand)
+[Example source](src/example/java/ExampleOptionCommand.java)
 
 # SubcommandCommand
 
