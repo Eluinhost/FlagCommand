@@ -1,6 +1,6 @@
 /*
  * Project: FlagCommands
- * Class: gg.uhc.flagcommands.commands.NonOptionsTabComplete
+ * Class: gg.uhc.flagcommands.tab.OptionsTabComplete
  *
  * The MIT License (MIT)
  *

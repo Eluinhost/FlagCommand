@@ -1,6 +1,6 @@
 /*
  * Project: FlagCommands
- * Class: gg.uhc.flagcommands.tab.RemoveAlreadyProvidedTabComplete
+ * Class: gg.uhc.flagcommands.tab.NonDuplicateTabComplete
  *
  * The MIT License (MIT)
  *

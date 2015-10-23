@@ -1,6 +1,6 @@
 /*
  * Project: FlagCommands
- * Class: gg.uhc.uhc.commands.TeamNameTabCompleter
+ * Class: gg.uhc.flagcommands.tab.TeamNameTabComplete
  *
  * The MIT License (MIT)
  *

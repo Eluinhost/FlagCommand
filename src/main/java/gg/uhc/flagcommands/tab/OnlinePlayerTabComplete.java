@@ -1,6 +1,6 @@
 /*
  * Project: FlagCommands
- * Class: gg.uhc.flagcommands.tab.OnlinePlayerNameCompleter
+ * Class: gg.uhc.flagcommands.tab.OnlinePlayerTabComplete
  *
  * The MIT License (MIT)
  *
