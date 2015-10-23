@@ -29,10 +29,8 @@ package gg.uhc.flagcommands.commands;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
+import gg.uhc.flagcommands.tab.OptionsTabComplete;
 import joptsimple.*;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -40,8 +38,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.util.StringUtil;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public abstract class OptionCommand implements TabExecutor {
@@ -51,6 +49,8 @@ public abstract class OptionCommand implements TabExecutor {
 
     protected final OptionParser parser;
     protected final OptionSpec<Void> forHelp;
+    protected final Map<ArgumentAcceptingOptionSpec, OptionsTabComplete> completers = Maps.newHashMap();
+    protected OptionsTabComplete nonOptionsTabComplete = OptionsTabComplete.NOTHING;
 
     public OptionCommand() {
         parser = new OptionParser();
@@ -146,32 +146,9 @@ public abstract class OptionCommand implements TabExecutor {
      */
     protected abstract boolean runCommand(CommandSender sender, OptionSet options);
 
-    /**
-     * Tab complete. Runs if the arg being parsed is not an option arg (starts with -).
-     *
-     * @param sender the initiator of the tab complete
-     * @param args the current args to complete
-     *
-     * @return list of options, same as TabCompleter
-     *
-     * @see StringUtil#copyPartialMatches(String, Iterable, Collection)
-     */
-    protected List<String> runTabComplete(CommandSender sender, String[] args) {
-        // default nothing
-        return ImmutableList.of();
-    }
-
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        String complete = args[args.length - 1];
-
-        // if it's empty there isn't much we can do, just pass on to command
-        if (complete.length() == 0 || complete.charAt(0) != '-') {
-            return runTabComplete(sender, args);
-        }
-
+    protected List<String> tabCompleteFlags(String toComplete, String[] others) {
         // filter the args to only ones starting with a dash
-        final Set<String> parameters = Sets.newHashSet(Iterables.filter(Lists.newArrayList(args), STARTS_WITH_DASH));
+        final Set<String> parameters = Sets.newHashSet(Iterables.filter(Lists.newArrayList(others), STARTS_WITH_DASH));
 
         Set<String> available = Sets.newHashSet();
 
@@ -194,7 +171,60 @@ public abstract class OptionCommand implements TabExecutor {
         }
 
         // return applicable ones
-        return StringUtil.copyPartialMatches(complete, available, Lists.<String>newArrayList());
+        return StringUtil.copyPartialMatches(toComplete, available, Lists.<String>newArrayList());
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        String complete = args[args.length - 1];
+        String[] others = new String[args.length - 1];
+        System.arraycopy(args, 0, others, 0, args.length - 1);
+
+        // if it's the first argument
+        if (others.length == 0) {
+            List<String> all = Lists.newArrayList();
+
+            // add non-options
+            all.addAll(nonOptionsTabComplete.onTabComplete(sender, command, alias, args, complete, others));
+
+            // add all flags
+            all.addAll(tabCompleteFlags(complete, others));
+
+            return all;
+        }
+
+        if (complete.length() != 0 && complete.charAt(0) == '-') {
+            return tabCompleteFlags(complete, others);
+        }
+
+        // check previous word, if it was a flag show the tab complete for that arg if we have one
+        // otherwise just show generic tab complete from the nonOptions
+        String previous = others[others.length - 1];
+
+        if (previous.length() == 0 || previous.charAt(0) != '-') {
+            return nonOptionsTabComplete.onTabComplete(sender, command, alias, args, complete, others);
+        }
+
+        String option = previous.substring(1);
+
+        // handle -- flags
+        if (option.length() > 1 && option.charAt(0) == '-') {
+            option = option.substring(1);
+        }
+
+        OptionSpec spec = parser.recognizedOptions().get(option);
+
+        if (spec == null || !(spec instanceof ArgumentAcceptingOptionSpec)) {
+            return nonOptionsTabComplete.onTabComplete(sender, command, alias, args, complete, others);
+        }
+
+        OptionsTabComplete completer = completers.get(spec);
+
+        if (completer == null) {
+            return nonOptionsTabComplete.onTabComplete(sender, command, alias, args, complete, others);
+        }
+
+        return completer.onTabComplete(sender, command, alias, args, complete, others);
     }
 
     protected static final Predicate<String> STARTS_WITH_DASH = new Predicate<String>() {
