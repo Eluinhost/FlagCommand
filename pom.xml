@@ -6,8 +6,15 @@
 
     <groupId>gg.uhc</groupId>
     <artifactId>flagcommands</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <name>FlagCommands</name>
+
+    <licenses>
+        <license>
+            <name>MIT</name>
+            <url>LICENSE</url>
+        </license>
+    </licenses>
 
     <repositories>
         <repository>
