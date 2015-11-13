@@ -122,7 +122,7 @@ public class SubcommandCommand implements TabExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         // if no args given check for a default executor
-        CommandExecutor subcommand = commandExecutors.get(args.length == 0 ? NO_ARG_SPECIAL : args[0]);
+        CommandExecutor subcommand = commandExecutors.get(args.length == 0 ? NO_ARG_SPECIAL : args[0].toLowerCase());
 
         // invalid subcommands send usage
         if (subcommand == null) {
@@ -141,7 +141,7 @@ public class SubcommandCommand implements TabExecutor {
             return StringUtil.copyPartialMatches(args[0], commandExecutors.keySet(), Lists.<String>newArrayListWithCapacity(commandExecutors.size()));
         }
 
-        TabCompleter subcommand = tabCompleters.get(args[0]);
+        TabCompleter subcommand = tabCompleters.get(args[0].toLowerCase());
 
         // if the subcommand doesn't exists then just return empty
         if (subcommand == null) return ImmutableList.of();
