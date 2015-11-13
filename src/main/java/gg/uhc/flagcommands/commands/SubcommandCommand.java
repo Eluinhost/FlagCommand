@@ -32,18 +32,20 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.bukkit.ChatColor;
 import org.bukkit.command.*;
 import org.bukkit.util.StringUtil;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class SubcommandCommand implements TabExecutor {
 
     protected final Map<String, CommandExecutor> commandExecutors = Maps.newHashMap();
     protected final Map<String, TabCompleter> tabCompleters = Maps.newHashMap();
+
+    public static final String NO_ARG_SPECIAL = "<no argument>";
 
     /**
      * Register a TabExecutor for tab complete and command execution. Does not allow reregistering of subroutes.
@@ -65,6 +67,8 @@ public class SubcommandCommand implements TabExecutor {
 
     /**
      * Regsister a CommandExecutor to run on commands. Does not allow reregistering of subroutes.
+     *
+     * Register with NO_ARG_SPECIAL to override sending help when not provided.
      *
      * @param name the subcommand to run for
      * @param executor the executor to run
@@ -95,28 +99,39 @@ public class SubcommandCommand implements TabExecutor {
         tabCompleters.put(name, tabCompleter);
     }
 
-    protected void sendUsage(CommandSender sender) {
-        sender.sendMessage(ChatColor.RED + "This command requires an argument. Available: [" + Joiner.on(",").join(commandExecutors.keySet())+ "]");
+    protected void sendUsage(CommandSender sender, String[] args) {
+        Set<String> keys = commandExecutors.keySet();
+
+        StringBuilder builder = new StringBuilder();
+
+        if (args.length == 0) {
+            builder.append("Missing a required argument at the end of your command.");
+        } else {
+            builder.append("Invalid argument `")
+                    .append(args[0])
+                    .append("`.");
+        }
+
+        builder.append(" Allowed arguments: [")
+                .append(Joiner.on(",").join(keys))
+                .append("]");
+
+        sender.sendMessage(builder.toString());
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // if no args send then return the usage message instead
-        if (args.length == 0) {
-            sendUsage(sender);
-            return true;
-        }
-
-        CommandExecutor subcommand = commandExecutors.get(args[0]);
+        // if no args given check for a default executor
+        CommandExecutor subcommand = commandExecutors.get(args.length == 0 ? NO_ARG_SPECIAL : args[0]);
 
         // invalid subcommands send usage
         if (subcommand == null) {
-            sendUsage(sender);
+            sendUsage(sender, args);
             return true;
         }
 
         // cut subroute arg off and run subcommand
-        return subcommand.onCommand(sender, command, label, Arrays.copyOfRange(args, 1, args.length));
+        return subcommand.onCommand(sender, command, label, Arrays.copyOfRange(args, Math.min(args.length, 1), args.length));
     }
 
     @Override

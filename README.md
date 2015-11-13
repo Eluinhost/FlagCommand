@@ -43,3 +43,14 @@ class Example extends SubcommandCommand {
 		}
 }
 ```
+
+```java
+SubcommandCommand sub = new SubcommandCommand();
+sub.register("on", new OnCommand());
+sub.register("off", new OffCommand());
+
+getCommand("something").setExecutor(sub);
+```
+
+If you register something against SubcommandCommand.NO_ARG_SPECIAL then it will no longer show help when ran without an argument
+and will instead run the specified executor
